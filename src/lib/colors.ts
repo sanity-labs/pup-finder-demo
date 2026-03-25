@@ -8,7 +8,7 @@ export const DOG_COLORS = [
   "#DDA0FF", // lavender
   "#FFB347", // tangerine
   "#98D8C8", // seafoam
-  "#F7DC6F", // gold
+  "#7C83C9", // periwinkle
   "#BB8FCE", // purple
   "#85C1E9", // cornflower
 ];
