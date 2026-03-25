@@ -1,7 +1,7 @@
 export const DOG_COLORS = [
   "#FF6B6B", // coral red
   "#4ECDC4", // teal
-  "#FFE66D", // sunshine yellow
+  "#E8A317", // marigold
   "#A8E6CF", // mint green
   "#FF8B94", // salmon pink
   "#B8F3FF", // sky blue
