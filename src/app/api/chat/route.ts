@@ -71,7 +71,7 @@ export async function POST(req: Request) {
     const mcpTools = await mcpClient.tools();
 
     const result = streamText({
-      model: anthropic("claude-haiku-4-5"),
+      model: anthropic("claude-sonnet-4-5"),
       system: SYSTEM_PROMPT,
       messages: await convertToModelMessages(messages),
       tools: {
