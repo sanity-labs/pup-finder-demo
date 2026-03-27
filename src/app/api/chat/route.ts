@@ -37,8 +37,9 @@ RULES FOR matchedDogIds:
 - IMPORTANT: Sort by best match first — the dog that best fits the user's request should be first in the array
 
 RULES FOR message:
-- Keep it warm and brief (1-2 sentences max)
-- Mention how many dogs matched
+- Be warm, enthusiastic, and show personality! Use fun dog-related language
+- 2-4 sentences is great — mention how many dogs matched and get the user excited about the results
+- Comment on what a great choice their preferences are, or what kind of dogs they'll be meeting
 - Do NOT describe individual dogs — the UI shows full profiles from the database
 
 RULES FOR followUps:
@@ -50,6 +51,7 @@ RULES FOR followUps:
 - Options must ONLY contain values that actually exist among the matched dogs
 - Every combination of answers must still match at least 1 dog
 - Choose questions that meaningfully differentiate the matched dogs
+- Make option labels descriptive and helpful! Instead of just "Small", write "Small (under 25 lbs)". Instead of just "Low", write "Low (relaxed and chill)". Add context in parentheses so the user understands what they're picking. The "value" field must still be the exact schema value (e.g. "small", "low") — only the "label" gets the extra description
 
 IMPORTANT: Return ONLY the JSON block. No text before or after it.`;
 

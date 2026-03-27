@@ -128,6 +128,32 @@ export function ChatInterface({ initialDogs }: { initialDogs: Dog[] }) {
       setFollowUpAnswers(filters);
       // Show top match highlight after follow-up filtering narrows results
       setShowTopMatch(filtered.length > 1);
+
+      // Build a fun message about the results with top match callout
+      if (filtered.length === 0) {
+        setAiMessage("Ruh roh! None of our pups match all of those preferences. Give it another go — your perfect fur-ever friend is out there!");
+      } else if (filtered.length === 1) {
+        const dog = filtered[0];
+        const compat: string[] = [];
+        if (dog.goodWithKids) compat.push("tiny humans");
+        if (dog.goodWithDogs) compat.push("other pups");
+        if (dog.goodWithCats) compat.push("kitty siblings");
+        const compatStr = compat.length > 0 ? ` ${dog.name} gets along great with ${compat.join(", ")} too!` : "";
+        setAiMessage(
+          `Stop the presses — we found THE ONE! ${dog.name} the ${dog.breed} is tail-waggingly perfect for you. ${dog.energyLevel ? `With ${dog.energyLevel.toLowerCase()} energy` : "This pup is ready"} and a heart full of love, ${dog.name} is already doing zoomies just thinking about meeting ${dog.sex === "male" ? "his" : dog.sex === "female" ? "her" : "their"} fur-ever family!${compatStr} This was meant to be!`
+        );
+      } else {
+        const top = filtered[0];
+        const rest = filtered.length - 1;
+        const compat: string[] = [];
+        if (top.goodWithKids) compat.push("tiny humans");
+        if (top.goodWithDogs) compat.push("fellow pups");
+        if (top.goodWithCats) compat.push("kitty friends");
+        const compatStr = compat.length > 0 ? `, pawsome with ${compat.join(" and ")}` : "";
+        setAiMessage(
+          `We sniffed out ${filtered.length} tail-wagging matches! ${top.name} the ${top.breed} is our top pick — ${top.energyLevel ? top.energyLevel.toLowerCase() + " energy" : "a total sweetheart"}${compatStr}, and absolutely ready to steal your heart. But don't sleep on the other ${rest} ${rest === 1 ? "pup" : "pups"} — every single one is a certified good dog!`
+        );
+      }
     },
     [initialDogs, matchedDogIds]
   );
