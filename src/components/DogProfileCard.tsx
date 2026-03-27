@@ -1,36 +1,70 @@
 "use client";
 
 import Image from "next/image";
-import type { Dog, DogProfile } from "@/lib/types";
+import type { Dog } from "@/lib/types";
 import { getDogColor } from "@/lib/colors";
 import { urlFor } from "@/sanity/image";
 
 interface DogProfileCardProps {
   dog: Dog;
-  profile: DogProfile;
   colorIndex: number;
+  isTopMatch?: boolean;
   onClick: (dog: Dog) => void;
   onChoose: (dog: Dog) => void;
 }
 
+function buildTraits(dog: Dog): string[] {
+  const traits: string[] = [];
+  if (dog.energyLevel) traits.push(`Energy: ${dog.energyLevel}`);
+  if (dog.temperament) traits.push(`Temperament: ${dog.temperament}`);
+  if (dog.size && dog.weight) {
+    traits.push(`Size: ${dog.size}, ${dog.weight} lbs`);
+  } else if (dog.size) {
+    traits.push(`Size: ${dog.size}`);
+  }
+
+  const compat: string[] = [];
+  if (dog.goodWithKids) compat.push("kids");
+  if (dog.goodWithDogs) compat.push("dogs");
+  if (dog.goodWithCats) compat.push("cats");
+  if (compat.length > 0) traits.push(`Good with: ${compat.join(", ")}`);
+
+  if (dog.hypoallergenic) traits.push("Hypoallergenic");
+  if (dog.barking) traits.push(`Barking: ${dog.barking}`);
+
+  return traits.slice(0, 4);
+}
+
 export function DogProfileCard({
   dog,
-  profile,
   colorIndex,
+  isTopMatch,
   onClick,
   onChoose,
 }: DogProfileCardProps) {
   const color = getDogColor(colorIndex);
+  const subtitle = [dog.breed, dog.weight ? `${dog.weight} lbs` : null, dog.adoptionFee !== undefined ? `$${dog.adoptionFee}` : null]
+    .filter(Boolean)
+    .join(" · ");
+  const traits = buildTraits(dog);
 
   return (
     <div
-      className="fade-in bg-white/95 backdrop-blur rounded-2xl border-3 border-black overflow-hidden cursor-pointer card-hover"
+      className={`fade-in bg-white/95 backdrop-blur rounded-2xl border-3 border-black overflow-hidden cursor-pointer card-hover ${isTopMatch ? "top-match-glow" : ""}`}
       style={{
         "--dog-color": color,
         boxShadow: `4px 4px 0 ${color}, 8px 8px 0 rgba(0,0,0,0.12)`,
       } as React.CSSProperties}
       onClick={() => onClick(dog)}
     >
+      {isTopMatch && (
+        <div
+          className="text-center py-1.5 font-bold text-sm uppercase tracking-wide border-b-2 border-black/10"
+          style={{ backgroundColor: color + "30", color: "rgba(0,0,0,0.7)" }}
+        >
+          Top Match
+        </div>
+      )}
       <div className="flex flex-col sm:flex-row">
         {/* Image */}
         <div
@@ -56,7 +90,7 @@ export function DogProfileCard({
           {/* Header */}
           <div className="flex items-baseline justify-between mb-2">
             <h3 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-              <span>🐾</span> {profile.name}
+              <span>🐾</span> {dog.name}
             </h3>
             {dog.adoptionFee !== undefined && (
               <span
@@ -71,12 +105,12 @@ export function DogProfileCard({
             className="text-sm font-semibold mb-3"
             style={{ color: color }}
           >
-            {profile.subtitle}
+            {subtitle}
           </p>
 
           {/* Traits */}
           <ul className="space-y-1.5 mb-3 flex-1">
-            {profile.traits.map((trait, i) => (
+            {traits.map((trait, i) => (
               <li key={i} className="text-gray-700 text-sm leading-snug">
                 <span className="font-bold text-gray-900">
                   {trait.includes(":") ? trait.split(":")[0] + ":" : ""}
@@ -86,10 +120,12 @@ export function DogProfileCard({
             ))}
           </ul>
 
-          {/* Tagline */}
-          <p className="text-gray-500 italic text-sm mb-4">
-            {profile.tagline}
-          </p>
+          {/* Description snippet */}
+          {dog.description && (
+            <p className="text-gray-500 italic text-sm mb-4 line-clamp-2">
+              {dog.description}
+            </p>
+          )}
 
           {/* Choose button */}
           <button

@@ -2,86 +2,48 @@
 
 import { useChat } from "@ai-sdk/react";
 import { useState, useEffect, useCallback } from "react";
-import type { Dog, FollowUpQuestion, DogProfile } from "@/lib/types";
+import type { Dog, FollowUpQuestion, FilterCriterion, AISearchResponse } from "@/lib/types";
+import { filterDogs } from "@/lib/filterDogs";
 import { DogGrid } from "./DogGrid";
 import { SearchInput } from "./SearchInput";
 import { FollowUpPills } from "./FollowUpPills";
 import { DogProfileCard } from "./DogProfileCard";
-import { DogProfileSkeleton } from "./DogProfileSkeleton";
 import { DogModal } from "./DogModal";
 import { Confetti } from "./Confetti";
 
-function parseMarkers(text: string) {
-  const dogMatch = text.match(/<<<MATCHED_DOGS:(\[.*?\])>>>/);
-  const followUpRegex = new RegExp("<<<FOLLOW_UP:(\\[.*?\\])>>>", "s");
-  const followUpMatch = text.match(followUpRegex);
-  const profilesRegex = new RegExp("<<<DOG_PROFILES:(\\[.*?\\])>>>", "s");
-  const profilesMatch = text.match(profilesRegex);
-
-  let matchedIds: string[] | null = null;
-  let followUps: FollowUpQuestion[] | null = null;
-  let profiles: DogProfile[] | null = null;
-
-  if (dogMatch) {
+function parseAIResponse(text: string): AISearchResponse | null {
+  // Try to extract JSON from ```json ... ``` block
+  const jsonBlockMatch = text.match(/```json\s*([\s\S]*?)\s*```/);
+  if (jsonBlockMatch) {
     try {
-      matchedIds = JSON.parse(dogMatch[1]);
+      return JSON.parse(jsonBlockMatch[1]) as AISearchResponse;
     } catch {}
   }
 
-  if (followUpMatch) {
+  // Fallback: try to find a raw JSON object
+  const rawJsonMatch = text.match(/\{[\s\S]*"matchedDogIds"[\s\S]*\}/);
+  if (rawJsonMatch) {
     try {
-      followUps = JSON.parse(followUpMatch[1]);
+      return JSON.parse(rawJsonMatch[0]) as AISearchResponse;
     } catch {}
   }
 
-  if (profilesMatch) {
-    try {
-      profiles = JSON.parse(profilesMatch[1]);
-    } catch {}
-  }
-
-  // Split text around the DOG_PROFILES marker for intro/closing
-  let introText = "";
-  let closingText = "";
-
-  // First strip MATCHED_DOGS and FOLLOW_UP markers
-  let workingText = text
-    .replace(/<<<MATCHED_DOGS:(\[.*?\])>>>/g, "")
-    .replace(new RegExp("<<<FOLLOW_UP:(\\[.*?\\])>>>", "gs"), "");
-
-  if (profilesMatch) {
-    const idx = workingText.indexOf(profilesMatch[0]);
-    if (idx !== -1) {
-      introText = workingText.substring(0, idx).trim();
-      closingText = workingText.substring(idx + profilesMatch[0].length).trim();
-    } else {
-      introText = workingText.replace(profilesRegex, "").trim();
-    }
-  } else {
-    // Strip any partial/incomplete markers (e.g. during streaming)
-    introText = workingText.replace(/<<<[\s\S]*$/g, "").trim();
-  }
-
-  // Also clean partial markers from intro/closing
-  introText = introText.replace(/<<<[\s\S]*$/g, "").trim();
-  closingText = closingText.replace(/<<<[\s\S]*$/g, "").trim();
-
-  return { matchedIds, followUps, profiles, introText, closingText };
+  return null;
 }
 
 export function ChatInterface({ initialDogs }: { initialDogs: Dog[] }) {
-  const [filteredDogIds, setFilteredDogIds] = useState<string[] | null>(null);
-  const [introText, setIntroText] = useState<string | null>(null);
-  const [closingText, setClosingText] = useState<string | null>(null);
-  const [dogProfiles, setDogProfiles] = useState<DogProfile[] | null>(null);
+  const [aiMessage, setAiMessage] = useState<string | null>(null);
+  // matchedDogIds is ranked — first ID is the best match
+  const [matchedDogIds, setMatchedDogIds] = useState<string[] | null>(null);
+  const [displayedDogs, setDisplayedDogs] = useState<Dog[] | null>(null);
   const [followUpQuestions, setFollowUpQuestions] = useState<
     FollowUpQuestion[] | null
   >(null);
-  const [answeredMessageId, setAnsweredMessageId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string | null>(null);
   const [followUpAnswers, setFollowUpAnswers] = useState<
-    { question: string; answer: string }[] | null
+    FilterCriterion[] | null
   >(null);
+  const [showTopMatch, setShowTopMatch] = useState(false);
   const [selectedDog, setSelectedDog] = useState<Dog | null>(null);
   const [selectedDogColorIndex, setSelectedDogColorIndex] = useState<number>(0);
   const [showConfetti, setShowConfetti] = useState(false);
@@ -104,61 +66,48 @@ export function ChatInterface({ initialDogs }: { initialDogs: Dog[] }) {
 
   const isLoading = status === "streaming" || status === "submitted";
 
-  // Parse AI responses for structured markers
-  // Intro text updates live during streaming; everything else waits until done
+  // Parse AI response when streaming completes
   useEffect(() => {
+    if (isLoading) return;
+
     const assistantMessages = messages.filter((m) => m.role === "assistant");
     if (assistantMessages.length === 0) return;
 
     const lastAssistant = assistantMessages[assistantMessages.length - 1];
-
-    // Skip re-parsing a message whose follow-ups were already answered
-    if (lastAssistant.id === answeredMessageId) return;
-
     const textParts = lastAssistant.parts?.filter((p) => p.type === "text");
     if (!textParts || textParts.length === 0) return;
 
     const fullText = textParts
       .map((p) => (p as { type: "text"; text: string }).text)
       .join("");
-    const { matchedIds, followUps, profiles, introText: intro, closingText: closing } =
-      parseMarkers(fullText);
 
-    // Show intro text immediately while streaming
-    if (intro) {
-      setIntroText(intro);
+    const parsed = parseAIResponse(fullText);
+    if (!parsed) return;
+
+    setAiMessage(parsed.message);
+    setMatchedDogIds(parsed.matchedDogIds);
+
+    // Look up matched dogs from initialDogs, preserving AI rank order
+    const idOrder = new Map(parsed.matchedDogIds.map((id, i) => [id, i]));
+    const matched = initialDogs
+      .filter((d) => idOrder.has(d._id))
+      .sort((a, b) => (idOrder.get(a._id) ?? 0) - (idOrder.get(b._id) ?? 0));
+    setDisplayedDogs(matched);
+
+    if (parsed.followUps && parsed.followUps.length > 0) {
+      setFollowUpQuestions(parsed.followUps);
     }
-
-    // Buffer everything else until streaming completes
-    if (!isLoading) {
-      if (matchedIds) {
-        setFilteredDogIds(matchedIds);
-      }
-
-      if (closing) {
-        setClosingText(closing);
-      }
-
-      if (profiles) {
-        setDogProfiles(profiles);
-      }
-
-      if (followUps) {
-        setFollowUpQuestions(followUps);
-      }
-    }
-  }, [messages, answeredMessageId, isLoading]);
+  }, [messages, isLoading, initialDogs]);
 
   const handleSearch = useCallback(
     (query: string) => {
-      setIntroText(null);
-      setClosingText(null);
-      setDogProfiles(null);
+      setAiMessage(null);
+      setMatchedDogIds(null);
+      setDisplayedDogs(null);
       setFollowUpQuestions(null);
-      setFilteredDogIds([]);
-      setAnsweredMessageId(null);
       setSearchQuery(query);
       setFollowUpAnswers(null);
+      setShowTopMatch(false);
       setMessages([]);
       sendMessage({ text: query });
     },
@@ -166,39 +115,31 @@ export function ChatInterface({ initialDogs }: { initialDogs: Dog[] }) {
   );
 
   const handleFollowUpSubmit = useCallback(
-    (answers: { question: string; answer: string }[]) => {
-      // Track which message's follow-ups were answered so we don't re-show them,
-      // but still allow NEW follow-ups from the next AI response
-      const assistantMessages = messages.filter((m) => m.role === "assistant");
-      const lastAssistant = assistantMessages[assistantMessages.length - 1];
-      if (lastAssistant) {
-        setAnsweredMessageId(lastAssistant.id);
-      }
+    (filters: FilterCriterion[]) => {
+      if (!matchedDogIds) return;
+
+      // Client-side filtering, preserving original AI rank order
+      const filtered = filterDogs(initialDogs, matchedDogIds, filters);
+      const idOrder = new Map(matchedDogIds.map((id, i) => [id, i]));
+      filtered.sort((a, b) => (idOrder.get(a._id) ?? 0) - (idOrder.get(b._id) ?? 0));
+
+      setDisplayedDogs(filtered);
       setFollowUpQuestions(null);
-      setDogProfiles(null);
-      setFilteredDogIds([]);
-      setIntroText(null);
-      setClosingText(null);
-      setFollowUpAnswers(answers);
-      const parts = answers
-        .map((a) => `"${a.question}": ${a.answer}`)
-        .join("; ");
-      sendMessage({
-        text: `Here are my answers: ${parts}. Please apply these to the current results and narrow down the matches.`,
-      });
+      setFollowUpAnswers(filters);
+      // Show top match highlight after follow-up filtering narrows results
+      setShowTopMatch(filtered.length > 1);
     },
-    [sendMessage, messages]
+    [initialDogs, matchedDogIds]
   );
 
   const handleReset = useCallback(() => {
-    setFilteredDogIds(null);
-    setIntroText(null);
-    setClosingText(null);
-    setDogProfiles(null);
+    setAiMessage(null);
+    setMatchedDogIds(null);
+    setDisplayedDogs(null);
     setFollowUpQuestions(null);
-    setAnsweredMessageId(null);
     setSearchQuery(null);
     setFollowUpAnswers(null);
+    setShowTopMatch(false);
     setChosenDog(null);
     setShowConfetti(false);
     setMessages([]);
@@ -210,14 +151,10 @@ export function ChatInterface({ initialDogs }: { initialDogs: Dog[] }) {
     setShowConfetti(true);
   }, []);
 
-  // Resolve profiles to actual dog objects
-  const profileDogs = dogProfiles
-    ? dogProfiles
-        .map((profile) => {
-          const dog = initialDogs.find((d) => d._id === profile.id);
-          return dog ? { dog, profile } : null;
-        })
-        .filter(Boolean) as { dog: Dog; profile: DogProfile }[]
+  const hasSearched = matchedDogIds !== null;
+  // Top match is always the first dog in displayedDogs (AI ranked order preserved through filtering)
+  const topMatchId = showTopMatch && displayedDogs && displayedDogs.length > 1
+    ? displayedDogs[0]._id
     : null;
 
   return (
@@ -238,12 +175,12 @@ export function ChatInterface({ initialDogs }: { initialDogs: Dog[] }) {
           onSearch={handleSearch}
           onReset={handleReset}
           isLoading={isLoading}
-          hasResults={filteredDogIds !== null}
+          hasResults={hasSearched}
         />
       </div>
 
       {/* Search History */}
-      {searchQuery && filteredDogIds !== null && (
+      {searchQuery && hasSearched && (
         <div className="max-w-3xl mx-auto px-4 mb-4 fade-in">
           <div className="flex flex-col gap-2 text-sm">
             <span className="text-black/70 font-bold uppercase tracking-wide text-xs">
@@ -258,7 +195,7 @@ export function ChatInterface({ initialDogs }: { initialDogs: Dog[] }) {
                   key={i}
                   className="bg-yellow-100/90 backdrop-blur px-3 py-1.5 rounded-full border-2 border-black font-medium shadow-brutal"
                 >
-                  {a.answer}
+                  {String(a.value)}
                 </span>
               ))}
             </div>
@@ -266,21 +203,19 @@ export function ChatInterface({ initialDogs }: { initialDogs: Dog[] }) {
         </div>
       )}
 
-      {/* Intro + Closing Text */}
-      {(introText || closingText) && (
+      {/* AI Message */}
+      {aiMessage && (
         <div className="max-w-3xl mx-auto px-4 mb-6 fade-in">
           <div className="bg-white/95 backdrop-blur rounded-2xl p-6 shadow-brutal-lg border-3 border-black">
-            <p className="text-gray-800 text-lg leading-relaxed whitespace-pre-line">
-              {introText}
-              {introText && closingText ? "\n\n" : ""}
-              {closingText}
+            <p className="text-gray-800 text-lg leading-relaxed">
+              {aiMessage}
             </p>
           </div>
         </div>
       )}
 
       {/* Loading */}
-      {isLoading && !introText && (
+      {isLoading && (
         <div className="max-w-3xl mx-auto px-4 mb-6">
           <div className="bg-white/95 backdrop-blur rounded-2xl p-6 shadow-brutal-lg border-3 border-black">
             <div className="flex items-center gap-3">
@@ -298,7 +233,7 @@ export function ChatInterface({ initialDogs }: { initialDogs: Dog[] }) {
       )}
 
       {/* Follow-up Questions */}
-      {followUpQuestions && (
+      {followUpQuestions && !isLoading && (
         <div className="max-w-3xl mx-auto px-4 mb-8">
           <FollowUpPills
             questions={followUpQuestions}
@@ -307,14 +242,14 @@ export function ChatInterface({ initialDogs }: { initialDogs: Dog[] }) {
         </div>
       )}
 
-      {/* Dog Profile Cards or Skeletons */}
-      {profileDogs && profileDogs.length > 0 ? (
+      {/* Search Results */}
+      {displayedDogs && displayedDogs.length > 0 && !isLoading && (
         <div className="max-w-3xl mx-auto px-4 mb-6 space-y-4">
-          {profileDogs.map(({ dog, profile }, index) => (
+          {displayedDogs.map((dog, index) => (
             <DogProfileCard
               key={dog._id}
               dog={dog}
-              profile={profile}
+              isTopMatch={dog._id === topMatchId}
               colorIndex={index}
               onClick={(d) => {
                 setSelectedDogColorIndex(index);
@@ -324,12 +259,10 @@ export function ChatInterface({ initialDogs }: { initialDogs: Dog[] }) {
             />
           ))}
         </div>
-      ) : isLoading && filteredDogIds !== null ? (
-        <DogProfileSkeleton />
-      ) : null}
+      )}
 
       {/* Initial dog grid (before any search) */}
-      {filteredDogIds === null && (
+      {!hasSearched && !isLoading && (
         <div className="max-w-7xl mx-auto px-4">
           <DogGrid
             dogs={initialDogs}
@@ -343,9 +276,9 @@ export function ChatInterface({ initialDogs }: { initialDogs: Dog[] }) {
       )}
 
       {/* No matches message */}
-      {filteredDogIds !== null &&
-        filteredDogIds.length === 0 &&
-        !profileDogs?.length &&
+      {hasSearched &&
+        displayedDogs !== null &&
+        displayedDogs.length === 0 &&
         !isLoading && (
           <div className="text-center py-16">
             <p className="text-3xl text-white font-bold">

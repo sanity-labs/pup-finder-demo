@@ -40,15 +40,28 @@ export interface Dog {
   dateArrivedAtShelter?: string;
 }
 
-export interface FollowUpQuestion {
-  question: string;
-  options: string[];
+export type FilterType = "exact" | "includes" | "boolean";
+
+export interface FollowUpOption {
+  label: string;
+  value: string | number | boolean;
 }
 
-export interface DogProfile {
-  id: string;
-  name: string;
-  subtitle: string;
-  traits: string[];
-  tagline: string;
+export interface FollowUpQuestion {
+  question: string;
+  field: keyof Dog;
+  filterType: FilterType;
+  options: FollowUpOption[];
+}
+
+export interface FilterCriterion {
+  field: keyof Dog;
+  filterType: FilterType;
+  value: string | number | boolean;
+}
+
+export interface AISearchResponse {
+  message: string;
+  matchedDogIds: string[];
+  followUps?: FollowUpQuestion[];
 }

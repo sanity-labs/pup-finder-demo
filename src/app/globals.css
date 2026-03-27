@@ -94,4 +94,22 @@
       opacity: 1;
     }
   }
+
+  .top-match-glow {
+    animation: topMatchGlow 3s ease-in-out infinite;
+  }
+
+  @keyframes topMatchGlow {
+    0%,
+    100% {
+      box-shadow: 4px 4px 0 var(--dog-color),
+        8px 8px 0 rgba(0, 0, 0, 0.12),
+        0 0 12px 3px color-mix(in srgb, var(--dog-color) 40%, transparent);
+    }
+    50% {
+      box-shadow: 4px 4px 0 var(--dog-color),
+        8px 8px 0 rgba(0, 0, 0, 0.12),
+        0 0 28px 10px color-mix(in srgb, var(--dog-color) 50%, transparent);
+    }
+  }
 }

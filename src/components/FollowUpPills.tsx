@@ -1,29 +1,30 @@
 "use client";
 
 import { useState } from "react";
-import type { FollowUpQuestion } from "@/lib/types";
+import type { FollowUpQuestion, FollowUpOption, FilterCriterion } from "@/lib/types";
 import { DOG_COLORS } from "@/lib/colors";
 
 interface FollowUpPillsProps {
   questions: FollowUpQuestion[];
-  onSubmit: (answers: { question: string; answer: string }[]) => void;
+  onSubmit: (filters: FilterCriterion[]) => void;
 }
 
 export function FollowUpPills({ questions, onSubmit }: FollowUpPillsProps) {
-  const [selected, setSelected] = useState<Record<number, string>>({});
+  const [selected, setSelected] = useState<Record<number, FollowUpOption>>({});
 
   const allAnswered = questions.every((_, i) => selected[i] !== undefined);
 
-  const handleSelect = (questionIndex: number, option: string) => {
+  const handleSelect = (questionIndex: number, option: FollowUpOption) => {
     setSelected((prev) => ({ ...prev, [questionIndex]: option }));
   };
 
   const handleSubmit = () => {
-    const answers = questions.map((q, i) => ({
-      question: q.question,
-      answer: selected[i],
+    const filters: FilterCriterion[] = questions.map((q, i) => ({
+      field: q.field,
+      filterType: q.filterType,
+      value: selected[i].value,
     }));
-    onSubmit(answers);
+    onSubmit(filters);
   };
 
   return (
@@ -41,7 +42,7 @@ export function FollowUpPills({ questions, onSubmit }: FollowUpPillsProps) {
           <div className="flex flex-wrap gap-2">
             {q.options.map((option, oi) => {
               const color = DOG_COLORS[(qi * 3 + oi) % DOG_COLORS.length];
-              const isSelected = selected[qi] === option;
+              const isSelected = selected[qi]?.label === option.label;
               return (
                 <button
                   key={oi}
@@ -56,7 +57,7 @@ export function FollowUpPills({ questions, onSubmit }: FollowUpPillsProps) {
                   }}
                 >
                   {isSelected && <span className="mr-1">&#10003;</span>}
-                  {option}
+                  {option.label}
                 </button>
               );
             })}
