@@ -4,7 +4,7 @@ An AI-powered dog adoption app that replaces rigid search filters with a single 
 
 Built with [Next.js](https://nextjs.org/), [Sanity](https://www.sanity.io/), and [Sanity Agent Context](https://www.sanity.io/docs/ai/agent-context). And yes, there's confetti.
 
-<video src="https://cdn.sanity.io/files/3do82whm/next/ec957177e46d794fd1130fc75b09f7c4214f5bf2.mp4" controls autoplay loop muted width="600"></video>
+<video src="https://github.com/user-attachments/assets/8a285f81-5960-4ab2-834c-238c2110795f" controls autoplay loop muted width="600"></video>
 
 ## What it does
 
