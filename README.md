@@ -4,7 +4,7 @@ An AI-powered dog adoption app that replaces rigid search filters with a single 
 
 Built with [Next.js](https://nextjs.org/), [Sanity](https://www.sanity.io/), and [Sanity Agent Context](https://www.sanity.io/docs/ai/agent-context). And yes, there's confetti.
 
-![demo](https://github.com/user-attachments/assets/68096944-9ec9-47e0-89ab-0c45a57d1272)
+<img width="2969" height="2343" alt="image" src="https://github.com/user-attachments/assets/66ea218b-bb7d-4c94-a1ed-cf7a27b999f3" />
 
 ## What it does
 
@@ -19,6 +19,8 @@ Pup Finder lets users type exactly that. AI reads the structured dog data in San
 3. **Match** — AI filters the dogs and explains its reasoning
 4. **Narrow down** — If 4+ dogs match, the AI asks one round of follow-up questions based on what actually varies among the remaining dogs
 5. **Choose** — Pick your dog. Get confetti. Feel feelings.
+
+![demo](https://github.com/user-attachments/assets/68096944-9ec9-47e0-89ab-0c45a57d1272)
 
 ## Why Agent Context instead of RAG
 
