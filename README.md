@@ -4,6 +4,8 @@ An AI-powered dog adoption app that replaces rigid search filters with a single 
 
 Built with [Next.js](https://nextjs.org/), [Sanity](https://www.sanity.io/), and [Sanity Agent Context](https://www.sanity.io/docs/ai/agent-context). And yes, there's confetti.
 
+<img width="2969" height="2343" alt="image" src="https://github.com/user-attachments/assets/dca36c41-7a29-4168-af7e-f445c9cf76c1" />
+
 ## What it does
 
 Traditional shelter sites make you search like a database admin: size dropdown, breed checkbox, age slider. Nobody actually thinks that way. You think *"I need a chill dog that won't chase my cats and doesn't make me sneeze."*
