@@ -16,7 +16,7 @@ const PROMPT_IDEAS = [
   "We already have two dogs and a cat — whoever comes home needs to play nice",
   "First time dog owner, I don't want to be overwhelmed",
   "I want a dog that'll actually protect my house but be sweet with my family",
-  "I'm 80 years old and just lost my wife. I need a friend.",
+  "I'm retired and looking for a mellow buddy to keep me company on walks",
   "My daughter does best with calm, predictable animals",
   "Budget's tight but I want a dog that's ready to go — shots, fixed, the works",
 ];

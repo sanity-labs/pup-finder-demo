@@ -91,7 +91,7 @@ export function DogModal({ dog, onClose, onChoose, colorIndex }: DogModalProps) 
 
         {/* Image */}
         <div
-          className="relative h-72 md:h-80 overflow-hidden rounded-t-3xl"
+          className="relative aspect-4/3 overflow-hidden rounded-t-3xl"
           style={{ backgroundColor: color + "30" }}
         >
           {dog.image ? (

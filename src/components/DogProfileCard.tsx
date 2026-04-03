@@ -68,7 +68,7 @@ export function DogProfileCard({
       <div className="flex flex-col sm:flex-row">
         {/* Image */}
         <div
-          className="relative w-full sm:w-56 md:w-64 h-56 sm:h-auto shrink-0 overflow-hidden"
+          className="relative w-full sm:w-56 md:w-64 aspect-4/3 sm:aspect-auto shrink-0 overflow-hidden"
           style={{ backgroundColor: color + "30" }}
         >
           {dog.image ? (

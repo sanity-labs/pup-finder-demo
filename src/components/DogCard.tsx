@@ -38,7 +38,7 @@ export function DogCard({ dog, colorIndex, onClick, onChoose }: DogCardProps) {
     >
       {/* Image */}
       <div
-        className="relative h-56 overflow-hidden"
+        className="relative aspect-4/3 overflow-hidden"
         style={{ backgroundColor: color + "30" }}
       >
         {dog.image ? (
