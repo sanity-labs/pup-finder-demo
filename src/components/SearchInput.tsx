@@ -64,22 +64,43 @@ export function SearchInput({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="relative">
-      <div className="relative">
-        <input
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Describe your perfect dog..."
-          disabled={isLoading}
-          className="w-full text-lg md:text-xl pl-6 pr-38 py-5 rounded-2xl border-3 border-black bg-white/95 backdrop-blur shadow-brutal-lg focus:outline-none focus:shadow-[6px_6px_0_#FF6B6B,10px_10px_0_rgba(0,0,0,0.15)] focus:translate-x-[-2px] focus:translate-y-[-2px] transition-all placeholder:text-gray-400 font-medium disabled:opacity-60"
-        />
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-2">
+    <div className="space-y-3">
+      <form onSubmit={handleSubmit} className="relative">
+        <div className="relative">
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Describe your perfect dog..."
+            disabled={isLoading}
+            className="w-full text-lg md:text-xl pl-6 pr-6 md:pr-38 py-5 rounded-2xl border-3 border-black bg-white/95 backdrop-blur shadow-brutal-lg focus:outline-none focus:shadow-[6px_6px_0_#FF6B6B,10px_10px_0_rgba(0,0,0,0.15)] focus:translate-x-[-2px] focus:translate-y-[-2px] transition-all placeholder:text-gray-400 font-medium disabled:opacity-60"
+          />
+          <div className="hidden md:flex absolute right-3 top-1/2 -translate-y-1/2 gap-2">
+            {!query && !isLoading && (
+              <button
+                type="button"
+                onClick={fillRandomIdea}
+                className="text-sm font-semibold text-purple-600 hover:text-pink-500 transition-colors cursor-pointer whitespace-nowrap"
+              >
+                ✨ Give me ideas
+              </button>
+            )}
+            <button
+              type="submit"
+              disabled={isLoading || !query.trim()}
+              className="px-6 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold text-sm border-2 border-black shadow-brutal transition-all hover:translate-x-[-1px] hover:translate-y-[-1px] disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? "Searching..." : "Find My Pup!"}
+            </button>
+          </div>
+        </div>
+        {/* Mobile buttons below input */}
+        <div className="flex md:hidden gap-2 mt-3">
           {!query && !isLoading && (
             <button
               type="button"
               onClick={fillRandomIdea}
-              className="text-sm font-semibold text-purple-600 hover:text-pink-500 transition-colors cursor-pointer whitespace-nowrap"
+              className="flex-1 py-3 rounded-xl border-2 border-black bg-white font-semibold text-purple-600 shadow-brutal transition-all text-sm"
             >
               ✨ Give me ideas
             </button>
@@ -87,12 +108,12 @@ export function SearchInput({
           <button
             type="submit"
             disabled={isLoading || !query.trim()}
-            className="px-6 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold text-sm border-2 border-black shadow-brutal transition-all hover:translate-x-[-1px] hover:translate-y-[-1px] disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`${!query && !isLoading ? "flex-1" : "w-full"} py-3 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold text-sm border-2 border-black shadow-brutal transition-all disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             {isLoading ? "Searching..." : "Find My Pup!"}
           </button>
         </div>
-      </div>
-    </form>
+      </form>
+    </div>
   );
 }
