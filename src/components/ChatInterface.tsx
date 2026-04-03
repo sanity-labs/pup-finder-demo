@@ -11,6 +11,51 @@ import { DogProfileCard } from "./DogProfileCard";
 import { DogModal } from "./DogModal";
 import { Confetti } from "./Confetti";
 
+const TAGLINES = [
+  "Built with belly rubs and tail wags",
+  "Who's a good app? Who's a good app?!",
+  "No squeaky toys were harmed in the making of this app",
+  "Paw-ered by Sanity",
+  "Made with unconditional love (and treats)",
+  "Built by hoomans, approved by doggos",
+  "Every good boy deserves a good home (and a good app)",
+];
+
+function Footer() {
+  const [index, setIndex] = useState(0);
+  const [fade, setFade] = useState(true);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFade(false);
+      setTimeout(() => {
+        setIndex((i) => (i + 1) % TAGLINES.length);
+        setFade(true);
+      }, 400);
+    }, 7000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <footer className="py-6 text-center mt-8">
+      <p
+        className="text-black/40 text-sm italic mb-1 transition-opacity duration-400"
+        style={{ opacity: fade ? 1 : 0 }}
+      >
+        {TAGLINES[index]}
+      </p>
+      <a
+        href="https://github.com/sanity-labs/pup-finder-demo"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-black/50 hover:text-black text-sm font-medium transition-colors"
+      >
+        View on GitHub
+      </a>
+    </footer>
+  );
+}
+
 function parseAIResponse(text: string): AISearchResponse | null {
   // Try to extract JSON from ```json ... ``` block
   const jsonBlockMatch = text.match(/```json\s*([\s\S]*?)\s*```/);
@@ -335,6 +380,9 @@ export function ChatInterface({ initialDogs }: { initialDogs: Dog[] }) {
           }}
         />
       )}
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }
