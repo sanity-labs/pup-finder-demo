@@ -22,6 +22,10 @@ Pup Finder lets users type exactly that. AI reads the structured dog data in San
 
 ![demo](https://github.com/user-attachments/assets/68096944-9ec9-47e0-89ab-0c45a57d1272)
 
+### Architecture
+
+![Pup Finder Architecture](pup-finder-architecture.svg)
+
 ## Why Agent Context instead of RAG
 
 Most AI search follows the RAG playbook: dump content into a vector database as flat text, then do similarity search. That works for matching a question to a help article. It falls apart when your data has real structure.
